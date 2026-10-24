@@ -15,7 +15,6 @@ class GetCompanyInfoCategory(BaseParser):
 
         pkg = bytearray.fromhex(u'0c 02 10 9b 00 01 0e 00 0e 00 cf 02')
         pkg.extend(struct.pack(u"<H6sI", market, code, 0))
-        print(pkg.hex())
         # pkg= bytearray.fromhex(u'0c02109b00010e000e00cf02000030303030303100000000')
         self.send_pkg = pkg
     """

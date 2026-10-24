@@ -33,7 +33,7 @@ class GetCompanyInfoContent(BaseParser):
         pos += 12
         content = body_buf[pos: pos + length]
         # print(len(content))
-        return  content.decode('GBK', 'ignore')
+        return bytes(content)
 
 def ggc(hex):
     response = bytearray.fromhex(hex)

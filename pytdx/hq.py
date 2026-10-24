@@ -135,14 +135,25 @@ class TdxHq_API(BaseSocketClient):
 
     @update_last_ack_time
     def get_company_info_content(self, market, code, filename, start, length):
-        result = ""
+        if length <= 0:
+            return ""
+        parts = []
         cmd = GetCompanyInfoContent(self.client, lock=self.lock)
-        while cmd.retry_send:
+        remaining = length
+        while remaining > 0:
             cmd.setParams(market, code, filename, start, length)
-            result+=cmd.call_api()
-            start+=30720
-            length-=30720
-        return result
+            part = cmd.call_api()
+            if not part:
+                raise IOError("incomplete company info content response")
+            parts.append(part)
+            start += len(part)
+            remaining -= len(part)
+            length = remaining
+            if not cmd.retry_send:
+                break
+        if remaining > 0:
+            raise IOError("incomplete company info content response")
+        return b"".join(parts).decode("gbk", "ignore")
 
     @update_last_ack_time
     def get_xdxr_info(self, market, code):
@@ -184,7 +195,7 @@ class TdxHq_API(BaseSocketClient):
         :param filename the filename to download
         :param filesize the filesize to download , if you do not known the actually filesize, leave this value 0
         """
-        filecontent = bytearray(filesize)
+        filecontent = bytearray()
         current_downloaded_size = 0
         get_zero_length_package_times = 0
         while current_downloaded_size < filesize or filesize == 0:

@@ -33,18 +33,16 @@ class BaseCralwer:
         else:
             download_file = self.get_content(reporthook=reporthook, path_to_download=path_to_download, chunksize=chunksize, *args, **kwargs);
         
-        result =  self.parse(download_file, *args, **kwargs)
         try:
+            return self.parse(download_file, *args, **kwargs)
+        finally:
             download_file.close()
-        except:
-            pass
-        return result
 
     def fetch_via_http(self, reporthook = None, path_to_download=None, proxies=None, chunksize=1024 * 50, *args, **kwargs):
         if path_to_download is None:
             download_file = tempfile.NamedTemporaryFile(delete=True)
         else:
-            download_file = open(path_to_download, 'wb')
+            download_file = open(path_to_download, 'wb+')
 
         url = self.get_url(*args, **kwargs)
 

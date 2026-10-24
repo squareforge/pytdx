@@ -2,15 +2,10 @@
 
 from struct import calcsize, unpack
 from pytdx.crawler.base_crawler import BaseCralwer
-import shutil
+import io
 import tempfile
-import random
-import os
-import six
+import zipfile
 import pandas as pd
-
-if six.PY2:
-    import zipfile
 
 """
 https://github.com/rainx/pytdx/issues/133
@@ -82,45 +77,47 @@ class HistoryFinancialCrawler(BaseCralwer):
             filesize = 0
 
         from pytdx.hq import TdxHq_API
-        api = TdxHq_API()
-        api.need_setup = False
-        # calc.tdx.com.cn, calc2.tdx.com.cn
-        with api.connect(ip="data.tdx.com.cn"):
-            content = api.get_report_file_by_size("tdxfin/" + filename, filesize=filesize, reporthook=reporthook)
-            if path_to_download is None:
-                download_file = tempfile.NamedTemporaryFile(delete=True)
-            else:
-                download_file = open(path_to_download, 'wb')
-            download_file.write(content)    
-            download_file.seek(0)
-            return download_file
+        last_error = None
+        for host in ("data.tdx.com.cn", "120.76.152.87"):
+            api = TdxHq_API()
+            api.need_setup = False
+            try:
+                if not api.connect(ip=host):
+                    last_error = IOError("could not connect to {}".format(host))
+                    continue
+                content = api.get_report_file_by_size(
+                    "tdxfin/" + filename, filesize=filesize, reporthook=reporthook)
+                if not content:
+                    last_error = IOError("empty financial report from {}".format(host))
+                    continue
+                if path_to_download is None:
+                    download_file = tempfile.NamedTemporaryFile(delete=True)
+                else:
+                    download_file = open(path_to_download, 'wb+')
+                download_file.write(content)
+                download_file.seek(0)
+                return download_file
+            except Exception as exc:
+                last_error = exc
+            finally:
+                api.disconnect()
+        raise IOError("could not download financial report {}: {}".format(filename, last_error))
 
     def parse(self, download_file, *args, **kwargs):
+        download_file.seek(0)
+        if zipfile.is_zipfile(download_file):
+            download_file.seek(0)
+            with zipfile.ZipFile(download_file) as archive:
+                names = [name for name in archive.namelist() if name.lower().endswith('.dat')]
+                if not names:
+                    raise ValueError("no dat file found in zip archive")
+                with io.BytesIO(archive.read(names[0])) as datfile:
+                    return self._parse_dat(datfile)
+        download_file.seek(0)
+        return self._parse_dat(download_file)
 
+    def _parse_dat(self, datfile):
         header_pack_format = '<1hI1H3L'
-
-        if download_file.name.endswith('.zip'):
-            tmpdir_root = tempfile.gettempdir()
-            subdir_name = "pytdx_" + str(random.randint(0, 1000000))
-            tmpdir = os.path.join(tmpdir_root, subdir_name)
-            shutil.rmtree(tmpdir, ignore_errors=True)
-            os.makedirs(tmpdir)
-            if six.PY2:
-                with zipfile.ZipFile(download_file.name, 'r') as zf:
-                    zf.extractall(tmpdir)
-            else:
-                shutil.unpack_archive(download_file.name, extract_dir=tmpdir)
-            # only one file endswith .dat should be in zip archives
-            datfile = None
-            for _file in os.listdir(tmpdir):
-                if _file.endswith(".dat"):
-                    datfile = open(os.path.join(tmpdir, _file), "rb")
-                    # datfile = open("D:/stock/test/new_tdx7.43/vipdoc/cw/gpsh600036.dat", "rb")
-
-            if datfile is None:
-                raise Exception("no dat file found in zip archive")
-        else:
-            datfile = download_file
         header_size = calcsize(header_pack_format)
         stock_item_size = calcsize("<6s1c1L")
         data_header = datfile.read(header_size)
@@ -145,9 +142,6 @@ class HistoryFinancialCrawler(BaseCralwer):
             one_record = (code, report_date) + cw_info
             results.append(one_record)
 
-        if download_file.name.endswith('.zip'):
-            datfile.close()
-            shutil.rmtree(tmpdir, ignore_errors=True)
         return results
 
     def to_df(self, data):
