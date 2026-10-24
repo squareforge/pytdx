@@ -1,5 +1,4 @@
 #coding=utf-8
-from __future__ import unicode_literals, division
 
 import pandas as pd
 import os
@@ -21,7 +20,7 @@ class TdxDailyBarReader(BaseReader):
 
     def generate_filename(self, code, exchange):
 
-        if self.vipdoc_path == None:
+        if self.vipdoc_path is None:
             raise TdxNotAssignVipdocPathException(r"Please provide a vipdoc path , such as c:\\newtdx\\vipdoc")
 
         fname = os.path.join(self.vipdoc_path, exchange)
@@ -46,7 +45,7 @@ class TdxDailyBarReader(BaseReader):
 
     def get_df(self, code_or_file, exchange=None):
 
-        if exchange == None:
+        if exchange is None:
             return self.get_df_by_file(code_or_file)
         else:
             return self.get_df_by_code(code_or_file, exchange)

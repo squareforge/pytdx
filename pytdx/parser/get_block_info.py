@@ -5,13 +5,12 @@ from pytdx.reader.block_reader import BlockReader,BlockReader_TYPE_FLAT
 from pytdx.helper import get_datetime, get_volume, get_price
 from collections import OrderedDict
 import struct
-import six
 
 
 
 class GetBlockInfoMeta(BaseParser):
     def setParams(self, block_file):
-        if type(block_file) is six.text_type:
+        if isinstance(block_file, str):
             block_file = block_file.encode("utf-8")
         pkg = bytearray.fromhex(u'0C 39 18 69 00 01 2A 00 2A 00 C5 02')
         pkg.extend(struct.pack(u"<{}s".format(0x2a - 2), block_file))
@@ -28,7 +27,7 @@ class GetBlockInfoMeta(BaseParser):
 class GetBlockInfo(BaseParser):
 
     def setParams(self, block_file, start, size):
-        if type(block_file) is six.text_type:
+        if isinstance(block_file, str):
             block_file = block_file.encode("utf-8")
         pkg = bytearray.fromhex(u'0c 37 18 6a 00 01 6e 00 6e 00 b9 06')
         #pkg = bytearray.fromhex(u'0c 33 18 6a 00 01 6e 00 6e 00 b9 06 60 ea 00 00 30 75 00 00')

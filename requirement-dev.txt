@@ -1,7 +1,6 @@
 
 click
 pandas
-six
 cryptography
 pylint
 pytest

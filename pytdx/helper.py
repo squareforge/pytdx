@@ -1,7 +1,6 @@
 # coding=utf-8
 
 import struct
-import six
 
 
 #### XXX: 分析了一下，貌似是类似utf-8的编码方式保存有符号数字
@@ -122,11 +121,4 @@ def get_time(buffer, pos):
     return hour, minute, pos
 
 def indexbytes(data, pos):
-
-    if six.PY2:
-        if type(data) is bytearray:
-            return data[pos]
-        else:
-            return six.indexbytes(data, pos)
-    else:
-        return data[pos]
+    return data[pos]

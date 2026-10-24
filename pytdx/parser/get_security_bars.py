@@ -5,7 +5,6 @@ from pytdx.parser.base import BaseParser
 from pytdx.helper import get_datetime, get_volume, get_price
 from collections import OrderedDict
 import struct
-import six
 
 """
 Notice：，如果一个股票当天停牌，那天的K线还是能取到，成交量为0
@@ -20,7 +19,7 @@ recv: b1cb74000c01086401002d05aa00aa000a006ec73301b28c011e3254a081ad4816d6984d6f
 class GetSecurityBarsCmd(BaseParser):
 
     def setParams(self, category, market, code, start, count):
-        if type(code) is six.text_type:
+        if isinstance(code, str):
             code = code.encode("utf-8")
 
         self.category = category

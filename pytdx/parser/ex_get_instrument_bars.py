@@ -3,7 +3,6 @@
 from pytdx.parser.base import BaseParser
 from pytdx.helper import get_datetime, get_volume, get_price
 from collections import OrderedDict
-import six
 import struct
 
 class GetInstrumentBars(BaseParser):
@@ -35,7 +34,7 @@ class GetInstrumentBars(BaseParser):
         #self.client.send(bytearray.fromhex('01 01 08 6a 01 01 16 00 16 00'))
 
     def setParams(self, category, market, code, start, count):
-        if type(code) is six.text_type:
+        if isinstance(code, str):
             code = code.encode("utf-8")
         pkg = bytearray.fromhex('01 01 08 6a 01 01 16 00 16 00')
         pkg.extend(bytearray.fromhex("ff 23"))

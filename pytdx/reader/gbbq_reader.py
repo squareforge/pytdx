@@ -3,7 +3,6 @@
 import struct
 from ctypes import *
 import pandas as pd
-import sys
 
 
 ### take ref this article :http://blog.csdn.net/fangle6688/article/details/50956609
@@ -12,10 +11,7 @@ class GbbqReader(object):
 
 
     def get_df(self, fname):
-        if sys.version_info.major == 2:
-            bin_keys = bytearray.fromhex(self.hexdump_keys)
-        else:
-            bin_keys = bytes.fromhex(self.hexdump_keys)
+        bin_keys = bytes.fromhex(self.hexdump_keys)
         result = []
         with open(fname, "rb") as f:
             content = f.read()

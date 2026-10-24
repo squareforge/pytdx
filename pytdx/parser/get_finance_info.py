@@ -4,7 +4,6 @@ from pytdx.parser.base import BaseParser
 from pytdx.helper import get_datetime, get_volume, get_price
 from collections import OrderedDict
 import struct
-import six
 import sys
 
 
@@ -33,7 +32,7 @@ b1cb74000c1f1876006f100091009100010000303030303031b884ce4912000100bcc6330103cf2f
 class GetFinanceInfo(BaseParser):
 
     def setParams(self, market, code):
-        if type(code) is six.text_type:
+        if isinstance(code, str):
             code = code.encode("utf-8")
         pkg = bytearray.fromhex(u'0c 1f 18 76 00 01 0b 00 0b 00 10 00 01 00')
         pkg.extend(struct.pack(u"<B6s", market, code))

@@ -80,7 +80,7 @@ def update_last_ack_time(func):
             if self.raise_exception:
                 to_raise = TdxFunctionCallError("calling function error")
                 to_raise.original_exception = current_exception if current_exception else None
-                raise to_raise
+                raise to_raise from current_exception
         """
         如果raise_exception=True 抛出异常
         如果raise_exception=False 返回None
@@ -164,35 +164,47 @@ class BaseSocketClient(object):
         """
 
         self.client = TrafficStatSocket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.settimeout(time_out)
-        log.debug("connecting to server : %s on port :%d" % (ip, port))
         try:
+            self.client.settimeout(time_out)
+            log.debug("connecting to server : %s on port :%d" % (ip, port))
             self.ip = ip
             self.port = port
             if bindport is not None:
                 self.client.bind((bindip, bindport))
             self.client.connect((ip, port))
-        except socket.timeout as e:
-            # print(str(e))
-            log.debug("connection expired")
-            if self.raise_exception:
-                raise TdxConnectionError("connection timeout error")
-            return False
         except Exception as e:
+            try:
+                self.client.close()
+            except Exception as close_error:
+                log.debug("socket close failed: %s", close_error)
+            finally:
+                self.client = None
+            if isinstance(e, socket.timeout):
+                log.debug("connection expired")
+                if self.raise_exception:
+                    raise TdxConnectionError("connection timeout error") from e
+                return False
             if self.raise_exception:
-                raise TdxConnectionError("other errors")
+                raise TdxConnectionError("other errors") from e
             return False
 
         log.debug("connected!")
 
-        if self.need_setup:
-            self.setup()
+        try:
+            if self.need_setup:
+                self.setup()
 
-        if self.heartbeat:
-            self.stop_event = threading.Event()
-            self.heartbeat_thread = HqHeartBeatThread(
-                self, self.stop_event, self.heartbeat_interval)
-            self.heartbeat_thread.start()
+            if self.heartbeat:
+                self.stop_event = threading.Event()
+                self.heartbeat_thread = HqHeartBeatThread(
+                    self, self.stop_event, self.heartbeat_interval)
+                self.heartbeat_thread.start()
+        except Exception:
+            try:
+                self.disconnect()
+            except TdxConnectionError:
+                pass
+            raise
         return self
 
     def disconnect(self):
@@ -201,17 +213,26 @@ class BaseSocketClient(object):
                 self.heartbeat_thread.is_alive():
             self.stop_event.set()
 
-        if self.client:
+        client = self.client
+        if client is not None:
             log.debug("disconnecting")
+            error = None
             try:
-                self.client.shutdown(socket.SHUT_RDWR)
-                self.client.close()
-                self.client = None
+                client.shutdown(socket.SHUT_RDWR)
             except Exception as e:
                 log.debug(str(e))
-                if self.raise_exception:
-                    raise TdxConnectionError("disconnect err")
+                error = e
+            try:
+                client.close()
+            except Exception as e:
+                log.debug(str(e))
+                if error is None:
+                    error = e
+            finally:
+                self.client = None
             log.debug("disconnected")
+            if error is not None and self.raise_exception:
+                raise TdxConnectionError("disconnect err") from error
 
     def close(self):
         """

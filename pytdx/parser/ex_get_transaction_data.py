@@ -4,13 +4,12 @@ from pytdx.parser.base import BaseParser
 from pytdx.helper import get_datetime, get_volume, get_price, get_time
 from collections import OrderedDict
 import struct
-import six
 import datetime
 
 class GetTransactionData(BaseParser):
 
     def setParams(self, market, code, start, count):
-        if type(code) is six.text_type:
+        if isinstance(code, str):
             code = code.encode("utf-8")
         pkg = bytearray.fromhex('01 01 08 00 03 01 12 00 12 00 fc 23')
         pkg.extend(struct.pack("<B9siH", market, code, start, count))

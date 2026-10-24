@@ -9,11 +9,7 @@ import datetime
 class GetHistoryTransactionData(BaseParser):
 
     def setParams(self, market, code, date, start, count):
-        # if type(code) is six.text_type:
         code = code.encode("utf-8")
-
-        # if type(date) is (type(date) is six.text_type) or (type(date) is six.binary_type):
-        #     date = int(date)
 
         # pkg1 = bytearray.fromhex('01 01 30 00 02 01 16 00 16 00 06 24 3b c8 33 01 1f 30 30 30 32 30 00 00 00 01 00 00 00 00 f0 00')
         pkg = bytearray.fromhex('01 01 30 00 02 01 16 00 16 00 06 24')

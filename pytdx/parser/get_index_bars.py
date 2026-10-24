@@ -4,7 +4,6 @@ from pytdx.parser.base import BaseParser
 from pytdx.helper import get_datetime, get_volume, get_price
 from collections import OrderedDict
 import struct
-import six
 
 """
 param: category=9, market=1, stockcode=000001, start=0, count=10
@@ -28,7 +27,7 @@ bytearray(b'\xa8\xa9\xa4I\x10R\rR') = 1348917 151741792256.00000
 class GetIndexBarsCmd(BaseParser):
 
     def setParams(self, category, market, code, start, count):
-        if type(code) is six.text_type:
+        if isinstance(code, str):
             code = code.encode("utf-8")
 
         self.category = category

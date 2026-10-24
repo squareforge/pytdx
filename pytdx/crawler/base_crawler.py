@@ -1,13 +1,7 @@
 # coding: utf-8
 
 import tempfile
-import six
-import math
-
-if six.PY2:
-    from urllib2 import urlopen, Request
-else:
-    from urllib.request import urlopen, Request
+from urllib.request import urlopen, Request
 
 
 
@@ -44,36 +38,30 @@ class BaseCralwer:
         else:
             download_file = open(path_to_download, 'wb+')
 
-        url = self.get_url(*args, **kwargs)
-
-        request = Request(url)
-        # request.add_header('Referer', url)
-        request.add_header('User-Agent', r"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
-        res = urlopen(request)
-
-        if six.PY2:
-            resinfo = res.info()
-        else:
-            resinfo = res
-
-        if resinfo.getheader('Content-Length') is not None:
-            total_size = int(resinfo.getheader('Content-Length').strip())
-            downloaded = 0
-
-            while True:
-                chunk = res.read(chunksize)
-                downloaded += len(chunk)
-                if reporthook is not None:
-                    reporthook(downloaded,total_size)
-                if not chunk:
-                    break
-                download_file.write(chunk)
-        else:
-            content = res.read()
-            download_file.write(content)
-
-        download_file.seek(0)
-        return download_file
+        try:
+            url = self.get_url(*args, **kwargs)
+            request = Request(url)
+            request.add_header('User-Agent', r"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+            with urlopen(request) as res:
+                content_length = res.getheader('Content-Length')
+                if content_length is not None:
+                    total_size = int(content_length.strip())
+                    downloaded = 0
+                    while True:
+                        chunk = res.read(chunksize)
+                        downloaded += len(chunk)
+                        if reporthook is not None:
+                            reporthook(downloaded, total_size)
+                        if not chunk:
+                            break
+                        download_file.write(chunk)
+                else:
+                    download_file.write(res.read())
+            download_file.seek(0)
+            return download_file
+        except Exception:
+            download_file.close()
+            raise
 
 
     def get_url(self, *args, **kwargs):

@@ -35,12 +35,7 @@ from pytdx.parser.get_xdxr_info import GetXdXrInfo
 from pytdx.parser.get_report_file import GetReportFile
 from pytdx.parser.setup_commands import SetupCmd1, SetupCmd2, SetupCmd3
 from pytdx.util import get_real_trade_date, trade_date_sse
-try:
-    # Python 3
-    from collections.abc import Iterable
-except ImportError:
-    # Python 2.7
-    from collections import Iterable
+from collections.abc import Iterable
 
 if __name__ == '__main__':
     sys.path.append(os.path.dirname(

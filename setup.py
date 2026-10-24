@@ -60,10 +60,10 @@ setup(
     author_email='i@rainx.cc',
     url='https://github.com/rainx/pytdx',
     packages=find_packages(),
+    python_requires='>=3.8',
     install_requires=[
             'click',
             'pandas',
-            'six',
             'cryptography',
     ],
     entry_points={

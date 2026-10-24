@@ -3,7 +3,6 @@
 import struct
 # from ctypes import *
 import pandas as pd
-import sys
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 import os
 from libc.stdio cimport FILE, fopen, fwrite, fscanf, fclose, fprintf, fseek, ftell, SEEK_END, rewind, fread
@@ -32,10 +31,7 @@ cdef class GbbqReader(object):
         cdef unsigned int eax, ebx, num, numold
         cdef unsigned int eax_add, eax_xor
 
-        if sys.version_info.major == 2:
-            bin_keys = bytearray.fromhex(self.hexdump_keys)
-        else:
-            bin_keys = bytes.fromhex(self.hexdump_keys)
+        bin_keys = bytes.fromhex(self.hexdump_keys)
         result = []
 
         f = fopen(fname, "rb")
