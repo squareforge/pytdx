@@ -2,7 +2,15 @@
 
 pytdx 是使用 Python 实现的通达信行情协议客户端。这个仓库基于 [rainx/pytdx](https://github.com/rainx/pytdx)，继续维护标准行情、扩展行情、通达信数据文件读取和历史财务数据解析等功能。
 
-本分支仅支持 Python 3.8 及以上版本，不再兼容 Python 2。现有 `TdxHq_API` 公开方法及参数保持不变，可以继续用于 Hikyuu 等调用方。
+## 本分支改动
+
+- 仅支持 Python 3.8 及以上版本，移除 Python 2 分支和 `six` 依赖。
+- 修复 TCP 请求短发送、响应头分片及响应体不完整时的处理。
+- 连接或初始化失败时关闭 socket，并保留原始异常信息。
+- 修复历史逐笔接口对字符串日期的处理。
+- 修复 F10 内容拼接解码和历史财务文件下载、解析问题。
+
+`TdxHq_API` 现有公开方法的名称和参数保持不变。
 
 ## 安装
 
@@ -17,24 +25,6 @@ python -m pip install -e .
 ```bash
 python -m pip install 'git+https://github.com/squareforge/pytdx.git'
 ```
-
-生产环境建议固定到已验证的 Git 提交，以免后续更新改变运行中的依赖版本。
-
-## 基本用法
-
-```python
-from pytdx.hq import TdxHq_API
-
-api = TdxHq_API(raise_exception=True)
-with api.connect("YOUR_TDX_SERVER_IP", 7709):
-    bars = api.get_security_bars(9, 0, "000001", 0, 10)
-    stocks = api.get_security_list(0, 0)
-
-print(bars)
-print(len(stocks))
-```
-
-`get_security_bars()` 的类别 `9` 表示日 K 线，市场 `0` 表示深圳、`1` 表示上海。服务端地址需要换成当前可用的通达信行情服务器。
 
 ## 功能与文档
 
